@@ -1,3 +1,5 @@
+import os
+import traceback
 from typing import Tuple, Dict, Generic, Optional, TypeVar, List, Any
 from SSTable import SSTable, Pair, TOMBSTONE
 import pickle
@@ -14,8 +16,8 @@ class HeapItem(Generic[K, V]):
         self.sstableindex = sstableindex
 
     def __lt__(self, other):
-        key_i = str(self.pair.key)
-        key_j = str(other.pair.key)
+        key_i = self.pair.key
+        key_j = other.pair.key
         if key_i != key_j:
             return key_i < key_j
         return self.sstableindex > other.sstableindex
@@ -104,6 +106,9 @@ def mergesstable(sstables: List[SSTable[K, V]], newpath: str) -> (
                     pass
                 except Exception as e:
                     return None, e
+
+            newfile.flush()
+            os.fsync(newfile.fileno())
 
             return SSTable[K, V](newpath), None
 

@@ -26,7 +26,7 @@ class DB(Generic[K, V]):
         self.wal = wal
         self.walpath = walpath
         self.memtable = memtable
-        self.sstables: List[SSTable[K, V]] = (
+        self.sstables: Optional[List[SSTable[K, V]]] = (
             sstables) if sstables is not None else []
         self.sstablescounter = sstablecounter
         self.memtablesize = memtablesize
@@ -69,15 +69,17 @@ class DB(Generic[K, V]):
                 return val, None
 
             for i in range(len(self.sstables)-1, -1, -1):
+
                 sstable = self.sstables[i]
                 val, err = sstable.get(key)
+                print('val', val)
                 if err:
                     if isinstance(err, EOFError):
                         continue
 
-                    return None, err
-
-                return val, None
+                    # return None, err
+                if val:
+                    return val, None
             # Not Found
             return None, LookupError("Key not found")
 
@@ -142,10 +144,12 @@ class DB(Generic[K, V]):
         compactedsstable, err = (
             mergesstable(self.sstables, compactedsstablepath))
 
+
         if err:
             return err
 
         self.manifest.sstablepaths = [compactedsstablepath]
+        print(self.manifest.sstablepaths)
         try:
             writemanifest(self.manifestpath, self.manifest)
         except Exception as e:
@@ -167,7 +171,7 @@ class DB(Generic[K, V]):
 
 def new_db(maxmemtablesize: int, compactionthreshold: int) -> (
     Tuple)[Optional[DB[K, V]], Optional[Exception]]:
-    manifestpath = "MANIFEST"
+    manifestpath = "MANIFEST.manifest"
     manifest, err = Manifest.readmanifest(manifestpath)
     if err:
         return None, err
@@ -185,7 +189,9 @@ def new_db(maxmemtablesize: int, compactionthreshold: int) -> (
     if err:
         return None, err
 
-    return DB(wal, walpath, memtable, sstables, len(sstables), len(memtable.data), maxmemtablesize, manifest, manifestpath, compactionthreshold), None
+    return DB(wal, walpath, memtable, sstables, len(sstables),
+              len(memtable.data), maxmemtablesize, manifest, manifestpath,
+              compactionthreshold), None
 
 
 
