@@ -20,23 +20,28 @@ class SSTable(Generic[K, V]):
 
             with open(self.path, 'rb') as file:
                 while True:
+                    print('YES')
+                    print(self.path)
                     try:
 
                         pair: Pair[K, V] = pickle.load(file)
 
-                    except (KeyError, EOFError) as e:
+                    except EOFError as e:
+                        print(e)
+                        traceback.print_tb(e.__traceback__)
                         return None, e
-
-                    key_in_db = str(pair.key)
-                    if key_in_db == str(key):
-                        if str(pair.value) == TOMBSTONE:
+                    print('PAIR: ', pair)
+                    key_in_db = pair.key
+                    print('pair.key', pair.key)
+                    if key_in_db == key:
+                        if pair.value == TOMBSTONE:
                             return None, LookupError('Key not found')
 
                         return pair.value, None
                     # Table is sorted and if we have passed the key we can
                     # return None
-                    if key_in_db > str(key):
-                        return None, LookupError('Key not found')
+                    # if pair.key > key:
+                    #     return None, LookupError('Key not found')
 
         except Exception as e:
             return None, e

@@ -264,7 +264,7 @@ def main(db: DB):
 
 # --- Entry point ---
 if __name__ == "__main__":
-    db, err = new_db(3, 3)  # initialize DB
+    db, err = new_db(5, 5)  # initialize DB
     if err:
         print("Failed to initialize DB:")
         traceback.print_tb(err.__traceback__)
